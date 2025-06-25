@@ -1,0 +1,43 @@
+#include <MAVLink.h>  // MAVLink kütüphanesi  
+
+#define SYSID 255
+#define COMPID MAV_COMP_ID_SYSTEM_CONTROL
+
+mavlink_message_t msg;
+mavlink_status_t status;
+
+void setup() {
+  Serial.begin(115200);      // Bilgisayara log
+  Serial1.begin(57600);      // Pixhawk MAVLink (Telem2)
+  delay(3000);
+  Serial.println(" IMU ve Açı verisi alınıyor..."); 
+}
+
+void loop() {
+  while (Serial1.available() > 0) {
+    uint8_t c = Serial1.read();
+
+    if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) {
+
+      //  Gelen mesaj ATTITUDE ise → Roll, Pitch, Yaw 
+      if (msg.msgid == MAVLINK_MSG_ID_ATTITUDE) {
+        mavlink_attitude_t att;
+        mavlink_msg_attitude_decode(&msg, &att);
+
+        float roll_deg = att.roll * 180.0 / PI;
+        float pitch_deg = att.pitch * 180.0 / PI;
+        float yaw_deg = att.yaw * 180.0 / PI;
+
+        Serial.print("[AÇILAR] Roll: ");
+        Serial.print(roll_deg, 2); Serial.print("°, ");
+        Serial.print("Pitch: ");
+        Serial.print(pitch_deg, 2); Serial.print("°, ");
+        Serial.print("Yaw: ");
+        Serial.print(yaw_deg, 2); Serial.println("°");
+      }
+
+  
+
+    }
+  }
+}
